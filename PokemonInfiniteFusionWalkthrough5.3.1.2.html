@@ -257,18 +257,26 @@
       padding-bottom: 36px;
     }
 
-    .toc a {
+    .toc a,
+    .toc button {
       display: block;
+      width: 100%;
+      border: 0;
       padding: 10px 12px;
       border-radius: 14px;
       color: var(--muted);
+      background: transparent;
+      text-align: left;
       text-decoration: none;
       transition: 140ms ease;
       overflow-wrap: anywhere;
+      cursor: pointer;
     }
 
     .toc a:hover,
-    .toc a.active {
+    .toc a.active,
+    .toc button:hover,
+    .toc button.active {
       background: rgba(38, 27, 23, 0.05);
       color: var(--ink);
     }
@@ -376,18 +384,120 @@
       line-height: 1.75;
     }
 
-    .list {
+    .workspace {
       display: grid;
+      grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
       gap: 18px;
+      align-items: start;
     }
 
-    .entry {
-      padding: 22px;
+    .list {
+      display: grid;
+      gap: 10px;
+      max-height: calc(100vh - 56px);
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .browser-panel,
+    .detail-panel {
       border: 1px solid var(--line);
       border-radius: var(--radius);
       background: var(--surface);
       box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .browser-panel {
+      padding: 16px;
+      position: sticky;
+      top: 28px;
+    }
+
+    .browser-head,
+    .detail-head {
+      padding: 0 0 14px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 14px;
+    }
+
+    .browser-head h3,
+    .detail-head h3 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .browser-head p,
+    .detail-head p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .browser-item {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.72);
+      text-align: left;
+      cursor: pointer;
+      transition: 160ms ease;
+    }
+
+    .browser-item.active,
+    .browser-item:hover {
+      border-color: rgba(181, 68, 43, 0.28);
+      background: rgba(181, 68, 43, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .browser-item strong {
+      display: block;
+      font-size: 15px;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    .browser-item p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+      overflow-wrap: anywhere;
+    }
+
+    .browser-meta {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .detail-panel {
+      padding: 22px;
+      min-height: 70vh;
+    }
+
+    .entry {
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
       scroll-margin-top: 18px;
+    }
+
+    .detail-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .detail-nav .action {
+      min-width: 120px;
     }
 
     .entry-header {
@@ -576,6 +686,18 @@
       .hero {
         grid-template-columns: 1fr;
       }
+
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .browser-panel {
+        position: static;
+      }
+
+      .list {
+        max-height: none;
+      }
     }
 
     @media (max-width: 720px) {
@@ -748,6 +870,20 @@
         scroll-margin-top: 10px;
       }
 
+      .browser-panel,
+      .detail-panel {
+        border-radius: 18px;
+      }
+
+      .browser-panel,
+      .detail-panel {
+        padding: 16px;
+      }
+
+      .detail-nav {
+        flex-direction: column;
+      }
+
       .entry-header {
         flex-direction: column;
         gap: 12px;
@@ -912,7 +1048,17 @@
         </aside>
       </section>
 
-      <section class="list" id="list"></section>
+      <section class="workspace">
+        <div class="browser-panel">
+          <div class="browser-head">
+            <h3>章ブラウザ</h3>
+            <p>絞り込み結果から章を選び、右側で本文を読む構成です。</p>
+          </div>
+          <section class="list" id="list"></section>
+        </div>
+
+        <section class="detail-panel" id="detail"></section>
+      </section>
     </main>
   </div>
 
@@ -997,6 +1143,7 @@
     let query = "";
     let currentMode = appState.mode || "寄り道込み";
     let activeSectionId = appState.currentSection || null;
+    let visibleSectionIds = [];
 
     const sectionList = data.sections.map((section, index) => {
       const id = `section-${index}`;
@@ -1029,6 +1176,14 @@
 
     function getSectionById(id) {
       return sectionList.find((section) => section.id === id) || null;
+    }
+
+    function getSelectedSection(filteredSections) {
+      const current = filteredSections.find((section) => section.id === activeSectionId);
+      if (current) return current;
+      const resumed = filteredSections.find((section) => section.id === appState.currentSection);
+      if (resumed) return resumed;
+      return filteredSections[0] || null;
     }
 
     function setCurrentSection(id) {
@@ -1195,94 +1350,124 @@
 
     function renderToc() {
       const toc = document.getElementById("toc");
-      toc.innerHTML = sectionList.map((section) => {
+      toc.innerHTML = getFilteredSections().map((section) => {
         const label = translateTitle(section.title, section.title_ja);
-        return `<a href="#${section.id}" class="lv-${section.level}" data-link="${section.id}">${label}</a>`;
+        const active = section.id === activeSectionId ? "active" : "";
+        return `<button type="button" class="lv-${section.level} ${active}" data-select-section="${section.id}">${label}</button>`;
       }).join("");
     }
 
     function renderList() {
       const list = document.getElementById("list");
+      const detail = document.getElementById("detail");
       const filtered = getFilteredSections();
+      visibleSectionIds = filtered.map((section) => section.id);
 
       document.getElementById("visibleCount").textContent = String(filtered.length);
       document.getElementById("doneCount").textContent = String(sectionList.filter((section) => isDone(section.id)).length);
 
       if (!filtered.length) {
         list.innerHTML = '<div class="empty">一致する項目がありません。検索語や絞り込みを調整してください。</div>';
+        detail.innerHTML = '<div class="empty">表示できる章がありません。</div>';
+        activeSectionId = null;
+        renderToc();
         return;
       }
+
+      const selectedSection = getSelectedSection(filtered);
+      activeSectionId = selectedSection.id;
+      setCurrentSection(selectedSection.id);
+      renderToc();
 
       list.innerHTML = filtered.map((section) => {
         const translated = translateTitle(section.title, section.title_ja);
         const summary = section.paragraphs_ja?.[0] || section.paragraphs?.[0] || "";
-        const bullets = (section.bullets_ja?.length ? section.bullets_ja : section.bullets || []).slice(0, 6);
-        const images = (section.images || []).slice(0, 8);
-        const links = (section.links || []).slice(0, 8);
         const chapterLabel = section.chapter ? translateTitle(section.chapter, section.chapter_ja) : null;
+        const active = section.id === selectedSection.id ? "active" : "";
+        const saved = isSaved(section.id) ? "保存済み" : "";
+        const done = isDone(section.id) ? "完了済み" : "";
 
         return `
-          <article class="entry" id="${section.id}">
-            <div class="entry-header">
-              <div>
-                <div class="entry-kicker">
-                  <span class="tag accent">${levelLabel(section.level)}</span>
-                  <span class="tag">${regionLabel(section.region)}</span>
-                  ${chapterLabel ? `<span class="tag">${chapterLabel}</span>` : ""}
-                </div>
-                <h3>${translated}</h3>
-                <div class="subline">原題: ${section.title}</div>
-              </div>
-              <div class="entry-actions">
-                <button class="action ${isSaved(section.id) ? "active" : ""}" data-action="save" data-id="${section.id}">${isSaved(section.id) ? "保存済み" : "保存"}</button>
-                <button class="action ${isDone(section.id) ? "active" : ""}" data-action="done" data-id="${section.id}">${isDone(section.id) ? "完了済み" : "完了"}</button>
-              </div>
+          <button type="button" class="browser-item ${active}" data-select-section="${section.id}">
+            <div class="browser-meta">
+              <span class="tag accent">${levelLabel(section.level)}</span>
+              <span class="tag">${regionLabel(section.region)}</span>
+              ${chapterLabel ? `<span class="tag">${chapterLabel}</span>` : ""}
+              ${saved ? `<span class="tag">${saved}</span>` : ""}
+              ${done ? `<span class="tag">${done}</span>` : ""}
             </div>
-
-            ${summary ? `<p class="summary">${summary}</p>` : ""}
-
-            ${bullets.length ? `
-              <ul class="bullets">
-                ${bullets.map((item) => `<li>${item}</li>`).join("")}
-              </ul>
-            ` : ""}
-
-            ${images.length ? `
-              <div class="gallery">
-                ${images.map((src) => `<button class="thumb" data-image="${src}" title="画像を拡大"><img src="${src}" alt="${translated}"></button>`).join("")}
-              </div>
-            ` : ""}
-
-            ${links.length ? `
-              <div class="links">
-                ${links.map((link) => `<a href="${link.url}" target="_blank" rel="noreferrer">${link.label_ja || link.label}</a>`).join("")}
-              </div>
-            ` : ""}
-          </article>
+            <strong>${translated}</strong>
+            ${summary ? `<p>${summary}</p>` : `<p>この章を開いて詳細を確認します。</p>`}
+          </button>
         `;
       }).join("");
-    }
 
-    function updateActiveToc() {
-      const links = [...document.querySelectorAll("[data-link]")];
-      const sections = links.map((link) => document.getElementById(link.dataset.link)).filter(Boolean);
-      const current = sections.find((entry) => {
-        const rect = entry.getBoundingClientRect();
-        return rect.top <= 180 && rect.bottom >= 180;
-      });
-      links.forEach((link) => {
-        link.classList.toggle("active", current && link.dataset.link === current.id);
-      });
-      if (current) {
-        activeSectionId = current.id;
-        setCurrentSection(current.id);
-      }
+      const translated = translateTitle(selectedSection.title, selectedSection.title_ja);
+      const summary = selectedSection.paragraphs_ja?.[0] || selectedSection.paragraphs?.[0] || "";
+      const bullets = selectedSection.bullets_ja?.length ? selectedSection.bullets_ja : selectedSection.bullets || [];
+      const images = selectedSection.images || [];
+      const links = selectedSection.links || [];
+      const chapterLabel = selectedSection.chapter ? translateTitle(selectedSection.chapter, selectedSection.chapter_ja) : null;
+      const currentIndex = filtered.findIndex((section) => section.id === selectedSection.id);
+      const prev = filtered[currentIndex - 1] || null;
+      const next = filtered[currentIndex + 1] || null;
+
+      detail.innerHTML = `
+        <div class="detail-head">
+          <h3>選択中の章</h3>
+          <p>一覧から1件選ぶと、ここに本文と画像だけを表示します。</p>
+        </div>
+        <div class="detail-nav">
+          <button class="action" ${prev ? `data-select-section="${prev.id}"` : "disabled"}>前の章</button>
+          <button class="action" ${next ? `data-select-section="${next.id}"` : "disabled"}>次の章</button>
+        </div>
+        <article class="entry" id="${selectedSection.id}">
+          <div class="entry-header">
+            <div>
+              <div class="entry-kicker">
+                <span class="tag accent">${levelLabel(selectedSection.level)}</span>
+                <span class="tag">${regionLabel(selectedSection.region)}</span>
+                ${chapterLabel ? `<span class="tag">${chapterLabel}</span>` : ""}
+              </div>
+              <h3>${translated}</h3>
+              <div class="subline">原題: ${selectedSection.title}</div>
+            </div>
+            <div class="entry-actions">
+              <button class="action ${isSaved(selectedSection.id) ? "active" : ""}" data-action="save" data-id="${selectedSection.id}">${isSaved(selectedSection.id) ? "保存済み" : "保存"}</button>
+              <button class="action ${isDone(selectedSection.id) ? "active" : ""}" data-action="done" data-id="${selectedSection.id}">${isDone(selectedSection.id) ? "完了済み" : "完了"}</button>
+            </div>
+          </div>
+
+          ${summary ? `<p class="summary">${summary}</p>` : ""}
+
+          ${selectedSection.paragraphs_ja?.slice(1).length ? selectedSection.paragraphs_ja.slice(1).map((text) => `<p class="summary">${text}</p>`).join("") : ""}
+
+          ${bullets.length ? `
+            <ul class="bullets">
+              ${bullets.map((item) => `<li>${item}</li>`).join("")}
+            </ul>
+          ` : ""}
+
+          ${images.length ? `
+            <div class="gallery">
+              ${images.map((src) => `<button class="thumb" data-image="${src}" title="画像を拡大"><img src="${src}" alt="${translated}"></button>`).join("")}
+            </div>
+          ` : ""}
+
+          ${links.length ? `
+            <div class="links">
+              ${links.map((link) => `<a href="${link.url}" target="_blank" rel="noreferrer">${link.label_ja || link.label}</a>`).join("")}
+            </div>
+          ` : ""}
+        </article>
+      `;
     }
 
     function jumpToSection(id, behavior = "smooth") {
-      const node = document.getElementById(id);
-      if (!node) return;
-      node.scrollIntoView({ behavior, block: "start" });
+      activeSectionId = id;
+      setCurrentSection(id);
+      renderList();
+      document.getElementById("detail")?.scrollIntoView({ behavior, block: "start" });
     }
 
     function resetTransientFilters() {
@@ -1315,6 +1500,12 @@
         currentRegion = regionButton.dataset.region;
         renderFilters();
         renderList();
+        return;
+      }
+
+      const sectionButton = event.target.closest("[data-select-section]");
+      if (sectionButton) {
+        jumpToSection(sectionButton.dataset.selectSection);
         return;
       }
 
@@ -1405,8 +1596,6 @@
       if (event.target === lightbox) lightbox.classList.remove("open");
     });
 
-    document.addEventListener("scroll", updateActiveToc, { passive: true });
-
     renderCurrentPanel();
     renderQuickJumps();
     renderModes();
@@ -1414,7 +1603,6 @@
     renderFavorites();
     renderToc();
     renderList();
-    updateActiveToc();
 
     if (!window.location.hash && appState.currentSection) {
       setTimeout(() => jumpToSection(appState.currentSection, "auto"), 120);
