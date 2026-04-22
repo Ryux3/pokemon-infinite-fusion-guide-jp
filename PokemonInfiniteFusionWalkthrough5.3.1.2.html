@@ -32,6 +32,7 @@
 
     body {
       margin: 0;
+      overflow-x: hidden;
       color: var(--ink);
       font-family: "Yu Gothic UI", "Hiragino Sans", "Meiryo", sans-serif;
       background:
@@ -112,6 +113,27 @@
       margin-bottom: 14px;
     }
 
+    .toc-shell {
+      margin-top: 6px;
+    }
+
+    .toc-shell summary {
+      display: none;
+      list-style: none;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.52);
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .toc-shell summary::-webkit-details-marker {
+      display: none;
+    }
+
     .pill {
       border: 1px solid var(--line);
       border-radius: 999px;
@@ -170,6 +192,7 @@
       color: var(--muted);
       text-decoration: none;
       transition: 140ms ease;
+      overflow-wrap: anywhere;
     }
 
     .toc a:hover,
@@ -330,6 +353,7 @@
       font-size: clamp(22px, 3vw, 34px);
       line-height: 1.06;
       letter-spacing: -0.05em;
+      overflow-wrap: anywhere;
     }
 
     .subline {
@@ -365,6 +389,7 @@
       margin: 16px 0 0;
       color: var(--muted);
       line-height: 1.8;
+      overflow-wrap: anywhere;
     }
 
     .bullets {
@@ -418,6 +443,7 @@
       border: 1px solid var(--line);
       background: #fff;
       font-size: 13px;
+      overflow-wrap: anywhere;
     }
 
     .empty {
@@ -481,25 +507,234 @@
     }
 
     @media (max-width: 720px) {
+      body {
+        background:
+          radial-gradient(circle at top left, rgba(181, 68, 43, 0.12), transparent 14rem),
+          linear-gradient(180deg, #f7f2e8 0%, #efe6d7 52%, #f5efe4 100%);
+      }
+
       .main,
       .sidebar {
+        padding: max(14px, env(safe-area-inset-top)) 14px max(18px, env(safe-area-inset-bottom));
+      }
+
+      .brand {
+        margin-bottom: 16px;
+      }
+
+      .brand h1 {
+        font-size: 30px;
+        line-height: 0.96;
+      }
+
+      .brand p {
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      .search {
+        margin-bottom: 12px;
+      }
+
+      .search input {
+        padding: 12px 15px;
+        font-size: 16px;
+      }
+
+      .filter-row,
+      .toggle-row {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 4px;
+        margin-right: -2px;
+        scrollbar-width: none;
+      }
+
+      .filter-row::-webkit-scrollbar,
+      .toggle-row::-webkit-scrollbar {
+        display: none;
+      }
+
+      .pill {
+        flex: 0 0 auto;
+        white-space: nowrap;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin: 12px 0 16px;
+      }
+
+      .stat {
+        padding: 10px 12px;
+      }
+
+      .stat strong {
+        font-size: 18px;
+      }
+
+      .toc-shell summary {
+        display: block;
+        margin-bottom: 10px;
+      }
+
+      .toc {
+        gap: 4px;
+        padding-bottom: 8px;
+      }
+
+      .toc a {
+        padding: 9px 10px;
+      }
+
+      .toc .lv-h2 {
+        padding-left: 14px;
+      }
+
+      .toc .lv-h3 {
+        padding-left: 22px;
+      }
+
+      .hero {
+        gap: 14px;
+        margin-bottom: 16px;
+      }
+
+      .poster,
+      .guide-note,
+      .entry,
+      .empty {
+        border-radius: 18px;
+        box-shadow: 0 18px 38px rgba(58, 32, 18, 0.1);
+      }
+
+      .poster {
+        min-height: 0;
+        padding: 18px;
+      }
+
+      .poster::after {
+        width: 180px;
+        height: 180px;
+        inset: auto -9% -14% auto;
+      }
+
+      .poster h2 {
+        max-width: 100%;
+        font-size: clamp(30px, 12vw, 46px);
+        line-height: 0.94;
+      }
+
+      .poster p,
+      .guide-note ul,
+      .summary,
+      .bullets {
+        font-size: 14px;
+        line-height: 1.65;
+      }
+
+      .hero-tags {
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .hero-tags span {
+        padding: 7px 10px;
+        font-size: 12px;
+      }
+
+      .guide-note {
         padding: 18px;
       }
 
       .entry {
         padding: 18px;
+        scroll-margin-top: 10px;
       }
 
       .entry-header {
         flex-direction: column;
+        gap: 12px;
       }
 
       .entry-actions {
-        justify-content: flex-start;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+        justify-content: stretch;
       }
 
-      .stats {
-        grid-template-columns: 1fr 1fr;
+      .action {
+        width: 100%;
+        text-align: center;
+      }
+
+      .entry h3 {
+        font-size: clamp(20px, 7vw, 28px);
+      }
+
+      .subline {
+        font-size: 12px;
+      }
+
+      .gallery {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .thumb {
+        border-radius: 14px;
+      }
+
+      .links {
+        display: grid;
+        gap: 8px;
+      }
+
+      .links a {
+        width: 100%;
+        border-radius: 14px;
+        justify-content: center;
+        padding: 11px 12px;
+        text-align: center;
+      }
+
+      .lightbox {
+        padding: 12px;
+      }
+
+      .lightbox img {
+        max-height: 82vh;
+        border-radius: 14px;
+      }
+
+      .lightbox button {
+        top: 12px;
+        right: 12px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .main,
+      .sidebar {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .stats,
+      .entry-actions,
+      .gallery {
+        grid-template-columns: 1fr;
+      }
+
+      .brand h1 {
+        font-size: 26px;
+      }
+
+      .poster h2 {
+        font-size: 28px;
       }
     }
   </style>
@@ -531,7 +766,10 @@
         </div>
       </div>
 
-      <nav class="toc" id="toc"></nav>
+      <details class="toc-shell" open>
+        <summary>目次を開く</summary>
+        <nav class="toc" id="toc"></nav>
+      </details>
     </aside>
 
     <main class="main">
