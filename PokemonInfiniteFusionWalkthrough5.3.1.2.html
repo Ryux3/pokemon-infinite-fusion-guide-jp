@@ -105,6 +105,78 @@
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
     }
 
+    .current-panel,
+    .favorites-shell,
+    .quick-jumps-shell {
+      margin-bottom: 14px;
+    }
+
+    .current-card,
+    .favorites-card,
+    .quick-jumps-card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.48);
+    }
+
+    .panel-label {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .current-card strong {
+      display: block;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+
+    .current-card p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .panel-actions,
+    .favorites-list,
+    .quick-jumps {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .mini-action,
+    .jump-chip,
+    .favorite-chip {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 9px 12px;
+      background: #fff;
+      color: var(--ink);
+      font-size: 13px;
+      cursor: pointer;
+      text-decoration: none;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+
+    .jump-chip {
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .mode-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
     .filter-row,
     .toggle-row {
       display: flex;
@@ -542,6 +614,7 @@
       }
 
       .filter-row,
+      .mode-row,
       .toggle-row {
         flex-wrap: nowrap;
         overflow-x: auto;
@@ -551,6 +624,7 @@
       }
 
       .filter-row::-webkit-scrollbar,
+      .mode-row::-webkit-scrollbar,
       .toggle-row::-webkit-scrollbar {
         display: none;
       }
@@ -577,6 +651,27 @@
       .toc-shell summary {
         display: block;
         margin-bottom: 10px;
+      }
+
+      .current-card,
+      .favorites-card,
+      .quick-jumps-card {
+        padding: 12px;
+        border-radius: 16px;
+      }
+
+      .panel-actions,
+      .favorites-list,
+      .quick-jumps {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .mini-action,
+      .jump-chip,
+      .favorite-chip {
+        width: 100%;
+        text-align: center;
       }
 
       .toc {
@@ -724,6 +819,9 @@
       }
 
       .stats,
+      .panel-actions,
+      .favorites-list,
+      .quick-jumps,
       .entry-actions,
       .gallery {
         grid-template-columns: 1fr;
@@ -752,6 +850,16 @@
         <input id="searchInput" type="search" placeholder="章名・場所名・本文を検索">
       </div>
 
+      <div class="current-panel" id="currentPanel"></div>
+
+      <div class="quick-jumps-shell">
+        <div class="quick-jumps-card">
+          <p class="panel-label">Quick Jump</p>
+          <div class="quick-jumps" id="quickJumps"></div>
+        </div>
+      </div>
+
+      <div class="mode-row" id="modeFilters"></div>
       <div class="filter-row" id="regionFilters"></div>
       <div class="toggle-row" id="stateFilters"></div>
 
@@ -769,6 +877,14 @@
       <details class="toc-shell" open>
         <summary>目次を開く</summary>
         <nav class="toc" id="toc"></nav>
+      </details>
+
+      <details class="toc-shell" open>
+        <summary>お気に入り</summary>
+        <div class="favorites-card">
+          <p class="panel-label">Favorites</p>
+          <div class="favorites-list" id="favoritesList"></div>
+        </div>
       </details>
     </aside>
 
@@ -863,11 +979,24 @@
     };
 
     const state = JSON.parse(localStorage.getItem("if-guide-state") || "{}");
+    state._app = state._app || {};
+    const appState = state._app;
     const regionLabels = ["すべて", "カントー編", "ジョウト・セヴィ諸島編", "クリア後コンテンツ", "便利リンク集"];
+    const modeLabels = ["通常進行", "寄り道込み", "伝説回収重視"];
+    const quickJumpItems = [
+      { label: "なみのり", query: "なみのり" },
+      { label: "シルフ", query: "Silph" },
+      { label: "グレン", query: "Cinnabar" },
+      { label: "ミュウツー", query: "Mewtwo" },
+      { label: "レックウザ", query: "Rayquaza" },
+      { label: "図鑑", query: "Pokedex" }
+    ];
     let currentRegion = "すべて";
     let showSavedOnly = false;
     let showUndoneOnly = false;
     let query = "";
+    let currentMode = appState.mode || "寄り道込み";
+    let activeSectionId = appState.currentSection || null;
 
     const sectionList = data.sections.map((section, index) => {
       const id = `section-${index}`;
@@ -896,6 +1025,18 @@
 
     function saveState() {
       localStorage.setItem("if-guide-state", JSON.stringify(state));
+    }
+
+    function getSectionById(id) {
+      return sectionList.find((section) => section.id === id) || null;
+    }
+
+    function setCurrentSection(id) {
+      if (!id || appState.currentSection === id) return;
+      appState.currentSection = id;
+      activeSectionId = id;
+      saveState();
+      renderCurrentPanel();
     }
 
     function translateTitle(title, translatedTitle = "") {
@@ -939,12 +1080,55 @@
       ].join(" ").toLowerCase();
     }
 
+    function classifySection(section) {
+      const own = section.title || "";
+      const chapter = section.chapter || "";
+      const region = section.region || "";
+      const combined = `${own} ${chapter} ${region}`;
+
+      if (region === "Useful Links and Lists" || own === "Useful Links and Lists") return "reference";
+      if (["Overview", "Author’s note", "Thanks", "Game Startup and Setup", "Trainer Application Form"].includes(own)) return "setup";
+      if (/Legendary|Mewtwo|Creation Trio|Rayquaza|Regigigas|Genesect|Triple Fusion|Pokedex Completion|Tower Duo|Ruby and Sapphire|Tao trio|Legendary Birds|Corsolas/i.test(combined)) return "collection";
+      if (/Optional Objectives|Optional Items/i.test(combined)) return "optional";
+      return "main";
+    }
+
+    sectionList.forEach((section) => {
+      section.modeGroup = classifySection(section);
+    });
+
     function isSaved(id) {
       return Boolean(state[id]?.saved);
     }
 
     function isDone(id) {
       return Boolean(state[id]?.done);
+    }
+
+    function matchesMode(section) {
+      if (currentMode === "寄り道込み") return true;
+      if (currentMode === "通常進行") return ["main", "setup"].includes(section.modeGroup);
+      if (currentMode === "伝説回収重視") return ["collection", "reference"].includes(section.modeGroup);
+      return true;
+    }
+
+    function getFilteredSections() {
+      return sectionList.filter((section) => {
+        const regionMatch = currentRegion === "すべて" || regionLabel(section.region) === currentRegion;
+        const savedMatch = !showSavedOnly || isSaved(section.id);
+        const undoneMatch = !showUndoneOnly || !isDone(section.id);
+        const queryMatch = !query || searchableText(section).includes(query);
+        const modeMatch = matchesMode(section);
+        return regionMatch && savedMatch && undoneMatch && queryMatch && modeMatch;
+      });
+    }
+
+    function renderModes() {
+      const root = document.getElementById("modeFilters");
+      root.innerHTML = modeLabels.map((label) => {
+        const active = label === currentMode ? "active" : "";
+        return `<button class="pill ${active}" data-mode="${label}">${label}</button>`;
+      }).join("");
     }
 
     function renderFilters() {
@@ -961,6 +1145,54 @@
       `;
     }
 
+    function renderQuickJumps() {
+      const root = document.getElementById("quickJumps");
+      root.innerHTML = quickJumpItems.map((item) => {
+        return `<button class="jump-chip" data-quick-jump="${item.query}">${item.label}</button>`;
+      }).join("");
+    }
+
+    function renderFavorites() {
+      const root = document.getElementById("favoritesList");
+      const favorites = sectionList.filter((section) => isSaved(section.id)).slice(0, 10);
+      if (!favorites.length) {
+        root.innerHTML = '<div class="subline">保存した章がここに並びます。</div>';
+        return;
+      }
+      root.innerHTML = favorites.map((section) => {
+        const label = translateTitle(section.title, section.title_ja);
+        return `<button class="favorite-chip" data-jump-section="${section.id}">${label}</button>`;
+      }).join("");
+    }
+
+    function renderCurrentPanel() {
+      const root = document.getElementById("currentPanel");
+      const section = getSectionById(activeSectionId || appState.currentSection);
+      if (!section) {
+        root.innerHTML = `
+          <div class="current-card">
+            <p class="panel-label">Continue</p>
+            <strong>現在地はまだ保存されていません。</strong>
+            <p>スクロールすると今見ている章を自動記録します。</p>
+          </div>
+        `;
+        return;
+      }
+      const label = translateTitle(section.title, section.title_ja);
+      const chapterLabel = section.chapter ? translateTitle(section.chapter, section.chapter_ja) : regionLabel(section.region);
+      root.innerHTML = `
+        <div class="current-card">
+          <p class="panel-label">Continue</p>
+          <strong>${label}</strong>
+          <p>${chapterLabel}</p>
+          <div class="panel-actions">
+            <button class="mini-action" data-resume="true">続きから開く</button>
+            <button class="mini-action" data-clear-progress="true">現在地を消す</button>
+          </div>
+        </div>
+      `;
+    }
+
     function renderToc() {
       const toc = document.getElementById("toc");
       toc.innerHTML = sectionList.map((section) => {
@@ -971,14 +1203,7 @@
 
     function renderList() {
       const list = document.getElementById("list");
-
-      const filtered = sectionList.filter((section) => {
-        const regionMatch = currentRegion === "すべて" || regionLabel(section.region) === currentRegion;
-        const savedMatch = !showSavedOnly || isSaved(section.id);
-        const undoneMatch = !showUndoneOnly || !isDone(section.id);
-        const queryMatch = !query || searchableText(section).includes(query);
-        return regionMatch && savedMatch && undoneMatch && queryMatch;
-      });
+      const filtered = getFilteredSections();
 
       document.getElementById("visibleCount").textContent = String(filtered.length);
       document.getElementById("doneCount").textContent = String(sectionList.filter((section) => isDone(section.id)).length);
@@ -1048,6 +1273,35 @@
       links.forEach((link) => {
         link.classList.toggle("active", current && link.dataset.link === current.id);
       });
+      if (current) {
+        activeSectionId = current.id;
+        setCurrentSection(current.id);
+      }
+    }
+
+    function jumpToSection(id, behavior = "smooth") {
+      const node = document.getElementById(id);
+      if (!node) return;
+      node.scrollIntoView({ behavior, block: "start" });
+    }
+
+    function resetTransientFilters() {
+      currentRegion = "すべて";
+      showSavedOnly = false;
+      showUndoneOnly = false;
+    }
+
+    function applyQuickJump(rawQuery) {
+      resetTransientFilters();
+      query = rawQuery.toLowerCase();
+      document.getElementById("searchInput").value = rawQuery;
+      renderFilters();
+      renderModes();
+      renderList();
+      const first = getFilteredSections()[0];
+      if (first) {
+        setTimeout(() => jumpToSection(first.id), 40);
+      }
     }
 
     document.getElementById("searchInput").addEventListener("input", (event) => {
@@ -1060,6 +1314,16 @@
       if (regionButton) {
         currentRegion = regionButton.dataset.region;
         renderFilters();
+        renderList();
+        return;
+      }
+
+      const modeButton = event.target.closest("[data-mode]");
+      if (modeButton) {
+        currentMode = modeButton.dataset.mode;
+        appState.mode = currentMode;
+        saveState();
+        renderModes();
         renderList();
         return;
       }
@@ -1080,7 +1344,49 @@
         if (action.dataset.action === "save") state[id].saved = !state[id].saved;
         if (action.dataset.action === "done") state[id].done = !state[id].done;
         saveState();
+        renderFavorites();
+        renderCurrentPanel();
         renderList();
+        return;
+      }
+
+      const quickJump = event.target.closest("[data-quick-jump]");
+      if (quickJump) {
+        applyQuickJump(quickJump.dataset.quickJump);
+        return;
+      }
+
+      const favoriteJump = event.target.closest("[data-jump-section]");
+      if (favoriteJump) {
+        resetTransientFilters();
+        query = "";
+        document.getElementById("searchInput").value = "";
+        renderFilters();
+        renderModes();
+        renderList();
+        setTimeout(() => jumpToSection(favoriteJump.dataset.jumpSection), 40);
+        return;
+      }
+
+      if (event.target.closest("[data-resume]")) {
+        const targetId = appState.currentSection;
+        if (targetId) {
+          resetTransientFilters();
+          query = "";
+          document.getElementById("searchInput").value = "";
+          renderFilters();
+          renderModes();
+          renderList();
+          setTimeout(() => jumpToSection(targetId), 40);
+        }
+        return;
+      }
+
+      if (event.target.closest("[data-clear-progress]")) {
+        delete appState.currentSection;
+        activeSectionId = null;
+        saveState();
+        renderCurrentPanel();
         return;
       }
 
@@ -1101,10 +1407,18 @@
 
     document.addEventListener("scroll", updateActiveToc, { passive: true });
 
+    renderCurrentPanel();
+    renderQuickJumps();
+    renderModes();
     renderFilters();
+    renderFavorites();
     renderToc();
     renderList();
     updateActiveToc();
+
+    if (!window.location.hash && appState.currentSection) {
+      setTimeout(() => jumpToSection(appState.currentSection, "auto"), 120);
+    }
   </script>
 </body>
 </html>
