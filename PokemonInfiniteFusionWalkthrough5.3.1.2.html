@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pokemon Infinite Fusion Guide JP</title>
+  <script src="guide-data.js"></script>
+  <script src="guide-data-ja.js"></script>
+  <style>
+    :root {
+      --bg: #f5efe4;
+      --bg-strong: #e9dfcf;
+      --surface: rgba(255, 251, 245, 0.9);
+      --surface-strong: #fffaf2;
+      --ink: #261b17;
+      --muted: #69584d;
+      --line: rgba(38, 27, 23, 0.12);
+      --accent: #b5442b;
+      --accent-soft: rgba(181, 68, 43, 0.12);
+      --forest: #35574a;
+      --shadow: 0 24px 70px rgba(58, 32, 18, 0.12);
+      --radius: 22px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Yu Gothic UI", "Hiragino Sans", "Meiryo", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(181, 68, 43, 0.14), transparent 24rem),
+        radial-gradient(circle at top right, rgba(53, 87, 74, 0.12), transparent 26rem),
+        linear-gradient(180deg, #f7f2e8 0%, #efe6d7 52%, #f5efe4 100%);
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 28px 22px;
+      border-right: 1px solid var(--line);
+      background: rgba(249, 242, 231, 0.86);
+      backdrop-filter: blur(18px);
+      overflow-y: auto;
+    }
+
+    .brand {
+      margin-bottom: 22px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: clamp(28px, 3vw, 40px);
+      line-height: 1.02;
+      letter-spacing: -0.04em;
+    }
+
+    .brand p {
+      margin: 12px 0 0;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 14px;
+    }
+
+    .search {
+      margin-bottom: 16px;
+    }
+
+    .search input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 14px 18px;
+      background: var(--surface-strong);
+      color: var(--ink);
+      font-size: 15px;
+      outline: none;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    .filter-row,
+    .toggle-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.56);
+      color: var(--muted);
+      font-size: 13px;
+      cursor: pointer;
+      transition: 160ms ease;
+    }
+
+    .pill.active,
+    .pill:hover {
+      border-color: rgba(181, 68, 43, 0.34);
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 18px 0 24px;
+    }
+
+    .stat {
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.48);
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 22px;
+      letter-spacing: -0.04em;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .toc {
+      display: grid;
+      gap: 8px;
+      padding-bottom: 36px;
+    }
+
+    .toc a {
+      display: block;
+      padding: 10px 12px;
+      border-radius: 14px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: 140ms ease;
+    }
+
+    .toc a:hover,
+    .toc a.active {
+      background: rgba(38, 27, 23, 0.05);
+      color: var(--ink);
+    }
+
+    .toc .lv-h1 {
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .toc .lv-h2 {
+      padding-left: 18px;
+      font-size: 14px;
+    }
+
+    .toc .lv-h3 {
+      padding-left: 32px;
+      font-size: 13px;
+    }
+
+    .main {
+      min-width: 0;
+      padding: 28px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+      gap: 22px;
+      margin-bottom: 24px;
+    }
+
+    .poster,
+    .guide-note {
+      border: 1px solid var(--line);
+      border-radius: calc(var(--radius) + 4px);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .poster {
+      position: relative;
+      min-height: 280px;
+      padding: 28px;
+      background:
+        linear-gradient(120deg, rgba(27, 20, 16, 0.08), rgba(27, 20, 16, 0)),
+        linear-gradient(160deg, rgba(181, 68, 43, 0.18), rgba(53, 87, 74, 0.2)),
+        var(--surface);
+    }
+
+    .poster::after {
+      content: "";
+      position: absolute;
+      inset: auto -14% -28% auto;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.36), transparent 68%);
+      pointer-events: none;
+    }
+
+    .poster h2 {
+      max-width: 12ch;
+      margin: 0;
+      font-size: clamp(38px, 5vw, 74px);
+      line-height: 0.92;
+      letter-spacing: -0.07em;
+    }
+
+    .poster p {
+      max-width: 50ch;
+      margin: 18px 0 0;
+      color: var(--muted);
+      line-height: 1.75;
+    }
+
+    .hero-tags {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    .hero-tags span {
+      border-radius: 999px;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      font-size: 13px;
+    }
+
+    .guide-note {
+      padding: 22px;
+    }
+
+    .guide-note h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+
+    .guide-note ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.75;
+    }
+
+    .list {
+      display: grid;
+      gap: 18px;
+    }
+
+    .entry {
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      scroll-margin-top: 18px;
+    }
+
+    .entry-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .entry-kicker {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .tag {
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      color: var(--muted);
+      background: rgba(38, 27, 23, 0.05);
+    }
+
+    .tag.accent {
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .entry h3 {
+      margin: 0;
+      font-size: clamp(22px, 3vw, 34px);
+      line-height: 1.06;
+      letter-spacing: -0.05em;
+    }
+
+    .subline {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .entry-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .action {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: #fff;
+      color: var(--ink);
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .action.active {
+      border-color: rgba(53, 87, 74, 0.36);
+      background: rgba(53, 87, 74, 0.12);
+      color: var(--forest);
+    }
+
+    .summary {
+      margin: 16px 0 0;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .bullets {
+      margin: 14px 0 0;
+      padding-left: 18px;
+      line-height: 1.75;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .thumb {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      aspect-ratio: 4 / 3;
+      background: #ece3d4;
+      cursor: pointer;
+    }
+
+    .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 220ms ease;
+    }
+
+    .thumb:hover img {
+      transform: scale(1.05);
+    }
+
+    .links {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .links a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 10px 13px;
+      text-decoration: none;
+      border: 1px solid var(--line);
+      background: #fff;
+      font-size: 13px;
+    }
+
+    .empty {
+      padding: 28px;
+      border: 1px dashed rgba(38, 27, 23, 0.22);
+      border-radius: var(--radius);
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.4);
+      text-align: center;
+    }
+
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 24px;
+      background: rgba(18, 12, 10, 0.78);
+      z-index: 30;
+    }
+
+    .lightbox.open {
+      display: grid;
+    }
+
+    .lightbox img {
+      max-width: min(1200px, 100%);
+      max-height: 88vh;
+      border-radius: 20px;
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.38);
+    }
+
+    .lightbox button {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    @media (max-width: 1100px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .main,
+      .sidebar {
+        padding: 18px;
+      }
+
+      .entry {
+        padding: 18px;
+      }
+
+      .entry-header {
+        flex-direction: column;
+      }
+
+      .entry-actions {
+        justify-content: flex-start;
+      }
+
+      .stats {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <p class="eyebrow">Private Guide App</p>
+        <h1>Infinite Fusion<br>Guide JP</h1>
+        <p>原文ウォークスルーを、探しやすい章構成と進行管理付きの個人用ガイドに再整理しています。</p>
+      </div>
+
+      <div class="search">
+        <input id="searchInput" type="search" placeholder="章名・場所名・本文を検索">
+      </div>
+
+      <div class="filter-row" id="regionFilters"></div>
+      <div class="toggle-row" id="stateFilters"></div>
+
+      <div class="stats">
+        <div class="stat">
+          <strong id="visibleCount">0</strong>
+          <span>表示中の項目</span>
+        </div>
+        <div class="stat">
+          <strong id="doneCount">0</strong>
+          <span>完了チェック</span>
+        </div>
+      </div>
+
+      <nav class="toc" id="toc"></nav>
+    </aside>
+
+    <main class="main">
+      <section class="hero">
+        <div class="poster">
+          <p class="eyebrow">Visual Thesis</p>
+          <h2>進行を失わない<br>冒険ログ。</h2>
+          <p>章ごとに検索し、完了を記録し、必要なスクリーンショットだけをすぐ開ける構成にしています。本文は原文ベースですが、導線と見出しは日本語寄りに再設計しています。</p>
+          <div class="hero-tags">
+            <span>検索</span>
+            <span>ブックマーク</span>
+            <span>完了チェック</span>
+            <span>画像ギャラリー</span>
+          </div>
+        </div>
+        <aside class="guide-note">
+          <h3>使い方</h3>
+          <ul>
+            <li>左の検索でルート名、街、ジム、本文断片をまとめて絞れます。</li>
+            <li>各項目の「完了」で進行管理、「保存」で後で見返す章を固定できます。</li>
+            <li>画像はクリックで拡大表示できます。</li>
+            <li>原文HTMLは同じフォルダの `PokemonInfiniteFusionWalkthrough5.3.1.2.source.html` に残しています。</li>
+          </ul>
+        </aside>
+      </section>
+
+      <section class="list" id="list"></section>
+    </main>
+  </div>
+
+  <div class="lightbox" id="lightbox">
+    <button type="button" id="lightboxClose">閉じる</button>
+    <img id="lightboxImage" alt="拡大画像">
+  </div>
+
+  <script>
+    const data = window.__GUIDE_DATA_JA__ || window.__GUIDE_DATA__;
+
+    if (!data) {
+      document.getElementById("list").innerHTML = '<div class="empty">`guide-data.js` が見つかりません。`build_guide_data.py` を実行してデータを生成してください。</div>';
+      throw new Error("guide-data.js is missing");
+    }
+
+    const titleMap = {
+      "Kanto’s Story": "カントー編",
+      "Johto and Sevii Islands": "ジョウト・セヴィ諸島編",
+      "End Game Content": "クリア後コンテンツ",
+      "Useful Links and Lists": "便利リンク集",
+      "Author’s note": "作者メモ",
+      "Thanks": "謝辞",
+      "Game Startup and Setup": "起動と初期設定",
+      "Trainer Application Form": "トレーナー申請フォーム",
+      "Journey’s Beginning": "旅のはじまり",
+      "Boulder Badge": "グレーバッジ",
+      "Cascade Badge": "ブルーバッジ",
+      "Thunder Badge": "オレンジバッジ",
+      "Rainbow Badge": "レインボーバッジ",
+      "Soul Badge": "ピンクバッジ",
+      "Marsh Badge": "ゴールドバッジ",
+      "Volcano Badge": "クリムゾンバッジ",
+      "Earth Badge": "グリーンバッジ",
+      "Elite Four": "四天王",
+      "Plain Badge": "レギュラーバッジ",
+      "Hive Badge": "インセクトバッジ",
+      "Zephyr Badge": "ウイングバッジ",
+      "Professor Elm": "ウツギ博士イベント",
+      "Rising Badge": "ライジングバッジ",
+      "Glacier Badge": "アイスバッジ",
+      "Fog Badge": "ファントムバッジ",
+      "Storm Badge": "ストームバッジ",
+      "Mineral Badge": "スチールバッジ",
+      "Mt. Silver": "シロガネやま",
+      "The Creation Trio": "創造神トリオ",
+      "Rayquaza": "レックウザ",
+      "Alien Spaceship": "宇宙船イベント",
+      "Optional Items - Corsolas": "任意アイテム - サニーゴ",
+      "Regigigas": "レジギガス",
+      "Genesect": "ゲノセクト",
+      "Triple Fusion": "トリプルフュージョン",
+      "Pokemon League Rematch": "ポケモンリーグ再戦",
+      "Vermillion’s Fighting Arena": "クチバ格闘アリーナ",
+      "Cinnabar Island": "グレンタウン追加要素",
+      "Pokedex Completion": "図鑑コンプリート",
+      "Optional Objectives - Diglett’s Cave and Cut": "寄り道 - ディグダの穴といあいぎり",
+      "Optional Objectives - Strength": "寄り道 - かいりき",
+      "Optional Objectives - Surf": "寄り道 - なみのり",
+      "Optional Objectives - Legendary Birds and more": "寄り道 - 三鳥ほか",
+      "Optional Objectives - Waterfall and Mewtwo": "寄り道 - たきのぼりとミュウツー",
+      "Optional Objectives - Karma and the Tao trio": "寄り道 - カルマとタオトリオ",
+      "Optional Objectives - Tower Duo, Ruby and Sapphire": "寄り道 - 塔デュオとルビー/サファイア"
+    };
+
+    const state = JSON.parse(localStorage.getItem("if-guide-state") || "{}");
+    const regionLabels = ["すべて", "カントー編", "ジョウト・セヴィ諸島編", "クリア後コンテンツ", "便利リンク集"];
+    let currentRegion = "すべて";
+    let showSavedOnly = false;
+    let showUndoneOnly = false;
+    let query = "";
+
+    const sectionList = data.sections.map((section, index) => {
+      const id = `section-${index}`;
+      let region = section.title;
+      if (section.level !== "h1") {
+        for (let i = index; i >= 0; i -= 1) {
+          if (data.sections[i].level === "h1") {
+            region = data.sections[i].title;
+            break;
+          }
+        }
+      }
+      let chapter = null;
+      let chapterJa = null;
+      if (section.level === "h3") {
+        for (let i = index; i >= 0; i -= 1) {
+          if (data.sections[i].level === "h2") {
+            chapter = data.sections[i].title;
+            chapterJa = data.sections[i].title_ja || "";
+            break;
+          }
+        }
+      }
+      return { ...section, id, region, chapter, chapter_ja: chapterJa };
+    });
+
+    function saveState() {
+      localStorage.setItem("if-guide-state", JSON.stringify(state));
+    }
+
+    function translateTitle(title, translatedTitle = "") {
+      if (titleMap[title]) return titleMap[title];
+      if (translatedTitle) return translatedTitle;
+
+      let result = title;
+      result = result.replace(/^Route (\d+)$/, "$1番道路");
+      result = result.replace(/^Route (\d+) and Route (\d+)$/, "$1番道路と$2番道路");
+      result = result.replace(/^Route (\d+) \((.+)\)$/, (_, route, note) => `${route}番道路 (${note})`);
+      result = result.replace(/ Gym$/, " ジム");
+      result = result.replace(/ City$/, " City");
+      result = result.replace(/ Town$/, " Town");
+      result = result.replace(/ Island$/, " Island");
+      result = result.replace(/ Cave$/, " Cave");
+      result = result.replace(/ Forest$/, " Forest");
+      result = result.replace(/ Road$/, " Road");
+      return result;
+    }
+
+    function regionLabel(raw) {
+      return titleMap[raw] || raw;
+    }
+
+    function levelLabel(level) {
+      return level === "h1" ? "大章" : level === "h2" ? "章" : "場所";
+    }
+
+    function searchableText(section) {
+      return [
+        section.title,
+        translateTitle(section.title),
+        section.title_ja || "",
+        section.region,
+        section.chapter || "",
+        section.chapter_ja || "",
+        ...(section.paragraphs || []),
+        ...(section.paragraphs_ja || []),
+        ...(section.bullets || []),
+        ...(section.bullets_ja || [])
+      ].join(" ").toLowerCase();
+    }
+
+    function isSaved(id) {
+      return Boolean(state[id]?.saved);
+    }
+
+    function isDone(id) {
+      return Boolean(state[id]?.done);
+    }
+
+    function renderFilters() {
+      const regionRoot = document.getElementById("regionFilters");
+      regionRoot.innerHTML = regionLabels.map((label) => {
+        const active = label === currentRegion ? "active" : "";
+        return `<button class="pill ${active}" data-region="${label}">${label}</button>`;
+      }).join("");
+
+      const stateRoot = document.getElementById("stateFilters");
+      stateRoot.innerHTML = `
+        <button class="pill ${showSavedOnly ? "active" : ""}" data-toggle="saved">保存のみ</button>
+        <button class="pill ${showUndoneOnly ? "active" : ""}" data-toggle="undone">未完了のみ</button>
+      `;
+    }
+
+    function renderToc() {
+      const toc = document.getElementById("toc");
+      toc.innerHTML = sectionList.map((section) => {
+        const label = translateTitle(section.title, section.title_ja);
+        return `<a href="#${section.id}" class="lv-${section.level}" data-link="${section.id}">${label}</a>`;
+      }).join("");
+    }
+
+    function renderList() {
+      const list = document.getElementById("list");
+
+      const filtered = sectionList.filter((section) => {
+        const regionMatch = currentRegion === "すべて" || regionLabel(section.region) === currentRegion;
+        const savedMatch = !showSavedOnly || isSaved(section.id);
+        const undoneMatch = !showUndoneOnly || !isDone(section.id);
+        const queryMatch = !query || searchableText(section).includes(query);
+        return regionMatch && savedMatch && undoneMatch && queryMatch;
+      });
+
+      document.getElementById("visibleCount").textContent = String(filtered.length);
+      document.getElementById("doneCount").textContent = String(sectionList.filter((section) => isDone(section.id)).length);
+
+      if (!filtered.length) {
+        list.innerHTML = '<div class="empty">一致する項目がありません。検索語や絞り込みを調整してください。</div>';
+        return;
+      }
+
+      list.innerHTML = filtered.map((section) => {
+        const translated = translateTitle(section.title, section.title_ja);
+        const summary = section.paragraphs_ja?.[0] || section.paragraphs?.[0] || "";
+        const bullets = (section.bullets_ja?.length ? section.bullets_ja : section.bullets || []).slice(0, 6);
+        const images = (section.images || []).slice(0, 8);
+        const links = (section.links || []).slice(0, 8);
+        const chapterLabel = section.chapter ? translateTitle(section.chapter, section.chapter_ja) : null;
+
+        return `
+          <article class="entry" id="${section.id}">
+            <div class="entry-header">
+              <div>
+                <div class="entry-kicker">
+                  <span class="tag accent">${levelLabel(section.level)}</span>
+                  <span class="tag">${regionLabel(section.region)}</span>
+                  ${chapterLabel ? `<span class="tag">${chapterLabel}</span>` : ""}
+                </div>
+                <h3>${translated}</h3>
+                <div class="subline">原題: ${section.title}</div>
+              </div>
+              <div class="entry-actions">
+                <button class="action ${isSaved(section.id) ? "active" : ""}" data-action="save" data-id="${section.id}">${isSaved(section.id) ? "保存済み" : "保存"}</button>
+                <button class="action ${isDone(section.id) ? "active" : ""}" data-action="done" data-id="${section.id}">${isDone(section.id) ? "完了済み" : "完了"}</button>
+              </div>
+            </div>
+
+            ${summary ? `<p class="summary">${summary}</p>` : ""}
+
+            ${bullets.length ? `
+              <ul class="bullets">
+                ${bullets.map((item) => `<li>${item}</li>`).join("")}
+              </ul>
+            ` : ""}
+
+            ${images.length ? `
+              <div class="gallery">
+                ${images.map((src) => `<button class="thumb" data-image="${src}" title="画像を拡大"><img src="${src}" alt="${translated}"></button>`).join("")}
+              </div>
+            ` : ""}
+
+            ${links.length ? `
+              <div class="links">
+                ${links.map((link) => `<a href="${link.url}" target="_blank" rel="noreferrer">${link.label_ja || link.label}</a>`).join("")}
+              </div>
+            ` : ""}
+          </article>
+        `;
+      }).join("");
+    }
+
+    function updateActiveToc() {
+      const links = [...document.querySelectorAll("[data-link]")];
+      const sections = links.map((link) => document.getElementById(link.dataset.link)).filter(Boolean);
+      const current = sections.find((entry) => {
+        const rect = entry.getBoundingClientRect();
+        return rect.top <= 180 && rect.bottom >= 180;
+      });
+      links.forEach((link) => {
+        link.classList.toggle("active", current && link.dataset.link === current.id);
+      });
+    }
+
+    document.getElementById("searchInput").addEventListener("input", (event) => {
+      query = event.target.value.trim().toLowerCase();
+      renderList();
+    });
+
+    document.addEventListener("click", (event) => {
+      const regionButton = event.target.closest("[data-region]");
+      if (regionButton) {
+        currentRegion = regionButton.dataset.region;
+        renderFilters();
+        renderList();
+        return;
+      }
+
+      const toggleButton = event.target.closest("[data-toggle]");
+      if (toggleButton) {
+        if (toggleButton.dataset.toggle === "saved") showSavedOnly = !showSavedOnly;
+        if (toggleButton.dataset.toggle === "undone") showUndoneOnly = !showUndoneOnly;
+        renderFilters();
+        renderList();
+        return;
+      }
+
+      const action = event.target.closest("[data-action]");
+      if (action) {
+        const id = action.dataset.id;
+        state[id] = state[id] || {};
+        if (action.dataset.action === "save") state[id].saved = !state[id].saved;
+        if (action.dataset.action === "done") state[id].done = !state[id].done;
+        saveState();
+        renderList();
+        return;
+      }
+
+      const imageButton = event.target.closest("[data-image]");
+      if (imageButton) {
+        document.getElementById("lightboxImage").src = imageButton.dataset.image;
+        document.getElementById("lightbox").classList.add("open");
+      }
+    });
+
+    const lightbox = document.getElementById("lightbox");
+    document.getElementById("lightboxClose").addEventListener("click", () => {
+      lightbox.classList.remove("open");
+    });
+    lightbox.addEventListener("click", (event) => {
+      if (event.target === lightbox) lightbox.classList.remove("open");
+    });
+
+    document.addEventListener("scroll", updateActiveToc, { passive: true });
+
+    renderFilters();
+    renderToc();
+    renderList();
+    updateActiveToc();
+  </script>
+</body>
+</html>
