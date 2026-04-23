@@ -1476,6 +1476,16 @@
       return result;
     }
 
+    function isLocationTitle(title = "", level = "") {
+      if (level === "h3") return true;
+      return /^(Route \d+|Mt\. |S\.S\. Anne|Pallet Town|Viridian City|Pewter City|Cerulean City|Vermillion City|Lavender Town|Celadon City|Fuchsia City|Saffron City|Goldenrod City|Azalea Town|Violet City|Cherrygrove City|New Bark Town|Blackthorn City|Mahogany Town|Ecruteak City|Cinnabar Island|Safari Zone|Pokemon Tower|Viridian Forest|Ilex Forest|Rock Tunnel|Mt\. Moon|Union Cave|Ruins of Alph|National Park|Seafoam Islands|Victory Road|Indigo Plateau|Ice Mountains|Mt\. Mortar|Lake of Rage|Navel Rock|Bond Bridge|Berry Forest|Mt\. Silver|Sky Pillar|Birth Island|Water Labyrinth|Resort Gorgeous|Sealed Chamber|Chrono Island|Dragon’s Den|Dragon's Den|Burned Tower|Bell Tower|Cerulean Cape|Secret Garden|Secret Forest|Power Plant|Diglett’s Cave|Diglett's Cave|Underground Path|Pokemon Mansion|Silph Co\. Head Office|Fighting Dojo|Creepy House|Viridian River|Crimson City|Offshore Road|Kindle Road|Brine Road|Boon Island|Kin Island|Knot Island|Treasure Beach|Togepi Island|Deep Sea|Ruby Chamber|Sapphire Cave|Dark Cave|Tohjo Falls|Cerulean Cave|P2 Laboratory|Team Rocket Warehouse|Pokemon League Gate)$/i.test(title);
+    }
+
+    function displayTitle(title, translatedTitle = "", level = "") {
+      if (isLocationTitle(title, level)) return title;
+      return translateTitle(title, translatedTitle);
+    }
+
     function regionLabel(raw) {
       return titleMap[raw] || raw;
     }
@@ -1487,7 +1497,7 @@
     function searchableText(section) {
       return [
         section.title,
-        translateTitle(section.title),
+        displayTitle(section.title, section.title_ja, section.level),
         section.title_ja || "",
         section.region,
         section.chapter || "",
@@ -1624,9 +1634,9 @@
         stickyMeta.textContent = "スクロールに合わせて更新されます。";
         return;
       }
-      const translated = translateTitle(section.title, section.title_ja);
+      const translated = displayTitle(section.title, section.title_ja, section.level);
       const detail = section.chapter
-        ? `${translateTitle(section.chapter, section.chapter_ja)} / ${regionLabel(section.region)}`
+        ? `${displayTitle(section.chapter, section.chapter_ja, "h2")} / ${regionLabel(section.region)}`
         : regionLabel(section.region);
       title.textContent = translated;
       meta.textContent = detail;
@@ -1637,7 +1647,7 @@
     function renderToc() {
       const toc = document.getElementById("toc");
       toc.innerHTML = getFilteredSections().map((section) => {
-        const label = translateTitle(section.title, section.title_ja);
+        const label = displayTitle(section.title, section.title_ja, section.level);
         const active = section.id === activeSectionId ? "active" : "";
         return `<button type="button" class="lv-${section.level} ${active}" data-select-section="${section.id}">${label}</button>`;
       }).join("");
@@ -1668,9 +1678,9 @@
       renderToc();
 
       list.innerHTML = filtered.map((section) => {
-        const translated = translateTitle(section.title, section.title_ja);
+        const translated = displayTitle(section.title, section.title_ja, section.level);
         const summary = section.paragraphs_ja?.[0] || section.paragraphs?.[0] || "";
-        const chapterLabel = section.chapter ? translateTitle(section.chapter, section.chapter_ja) : null;
+        const chapterLabel = section.chapter ? displayTitle(section.chapter, section.chapter_ja, "h2") : null;
         const active = section.id === selectedSection.id ? "active" : "";
         const saved = isSaved(section.id) ? "保存済み" : "";
         const done = isDone(section.id) ? "完了済み" : "";
@@ -1696,12 +1706,12 @@
         </div>
         <div class="detail-list">
           ${filtered.map((section) => {
-            const translated = translateTitle(section.title, section.title_ja);
+            const translated = displayTitle(section.title, section.title_ja, section.level);
             const summary = section.paragraphs_ja?.[0] || section.paragraphs?.[0] || "";
             const bullets = section.bullets_ja?.length ? section.bullets_ja : section.bullets || [];
             const images = section.images || [];
             const links = section.links || [];
-            const chapterLabel = section.chapter ? translateTitle(section.chapter, section.chapter_ja) : null;
+            const chapterLabel = section.chapter ? displayTitle(section.chapter, section.chapter_ja, "h2") : null;
 
             return `
               <article class="entry" id="${section.id}">
