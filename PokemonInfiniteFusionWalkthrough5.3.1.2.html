@@ -573,24 +573,18 @@
       min-height: calc(100vh - 120px);
     }
 
+    .detail-list {
+      display: grid;
+      gap: 18px;
+    }
+
     .entry {
-      padding: 0;
-      border: 0;
-      border-radius: 0;
-      background: transparent;
-      box-shadow: none;
-      scroll-margin-top: 18px;
-    }
-
-    .detail-nav {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 18px;
-    }
-
-    .detail-nav .action {
-      min-width: 120px;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.42);
+      box-shadow: 0 18px 38px rgba(58, 32, 18, 0.08);
+      scroll-margin-top: 96px;
     }
 
     .entry-header {
@@ -1586,65 +1580,62 @@
           </button>
         `;
       }).join("");
-
-      const translated = translateTitle(selectedSection.title, selectedSection.title_ja);
-      const summary = selectedSection.paragraphs_ja?.[0] || selectedSection.paragraphs?.[0] || "";
-      const bullets = selectedSection.bullets_ja?.length ? selectedSection.bullets_ja : selectedSection.bullets || [];
-      const images = selectedSection.images || [];
-      const links = selectedSection.links || [];
-      const chapterLabel = selectedSection.chapter ? translateTitle(selectedSection.chapter, selectedSection.chapter_ja) : null;
-      const currentIndex = filtered.findIndex((section) => section.id === selectedSection.id);
-      const prev = filtered[currentIndex - 1] || null;
-      const next = filtered[currentIndex + 1] || null;
-
       detail.innerHTML = `
         <div class="detail-head">
-          <h3>選択中の章</h3>
-          <p>一覧から1件選ぶと、ここに本文と画像だけを表示します。</p>
+          <h3>ガイド本文</h3>
+          <p>フィルタ結果をそのまま連続表示しています。章ブラウザや目次から必要な場所へジャンプできます。</p>
         </div>
-        <div class="detail-nav">
-          <button class="action" ${prev ? `data-select-section="${prev.id}"` : "disabled"}>前の章</button>
-          <button class="action" ${next ? `data-select-section="${next.id}"` : "disabled"}>次の章</button>
+        <div class="detail-list">
+          ${filtered.map((section) => {
+            const translated = translateTitle(section.title, section.title_ja);
+            const summary = section.paragraphs_ja?.[0] || section.paragraphs?.[0] || "";
+            const bullets = section.bullets_ja?.length ? section.bullets_ja : section.bullets || [];
+            const images = section.images || [];
+            const links = section.links || [];
+            const chapterLabel = section.chapter ? translateTitle(section.chapter, section.chapter_ja) : null;
+
+            return `
+              <article class="entry" id="${section.id}">
+                <div class="entry-header">
+                  <div>
+                    <div class="entry-kicker">
+                      <span class="tag accent">${levelLabel(section.level)}</span>
+                      <span class="tag">${regionLabel(section.region)}</span>
+                      ${chapterLabel ? `<span class="tag">${chapterLabel}</span>` : ""}
+                    </div>
+                    <h3>${translated}</h3>
+                    <div class="subline">原題: ${section.title}</div>
+                  </div>
+                  <div class="entry-actions">
+                    <button class="action ${isSaved(section.id) ? "active" : ""}" data-action="save" data-id="${section.id}">${isSaved(section.id) ? "保存済み" : "保存"}</button>
+                    <button class="action ${isDone(section.id) ? "active" : ""}" data-action="done" data-id="${section.id}">${isDone(section.id) ? "完了済み" : "完了"}</button>
+                  </div>
+                </div>
+
+                ${summary ? `<p class="summary">${summary}</p>` : ""}
+                ${section.paragraphs_ja?.slice(1).length ? section.paragraphs_ja.slice(1).map((text) => `<p class="summary">${text}</p>`).join("") : ""}
+
+                ${bullets.length ? `
+                  <ul class="bullets">
+                    ${bullets.map((item) => `<li>${item}</li>`).join("")}
+                  </ul>
+                ` : ""}
+
+                ${images.length ? `
+                  <div class="gallery">
+                    ${images.map((src) => `<button class="thumb" data-image="${src}" title="画像を拡大"><img src="${src}" alt="${translated}"></button>`).join("")}
+                  </div>
+                ` : ""}
+
+                ${links.length ? `
+                  <div class="links">
+                    ${links.map((link) => `<a href="${link.url}" target="_blank" rel="noreferrer">${link.label_ja || link.label}</a>`).join("")}
+                  </div>
+                ` : ""}
+              </article>
+            `;
+          }).join("")}
         </div>
-        <article class="entry" id="${selectedSection.id}">
-          <div class="entry-header">
-            <div>
-              <div class="entry-kicker">
-                <span class="tag accent">${levelLabel(selectedSection.level)}</span>
-                <span class="tag">${regionLabel(selectedSection.region)}</span>
-                ${chapterLabel ? `<span class="tag">${chapterLabel}</span>` : ""}
-              </div>
-              <h3>${translated}</h3>
-              <div class="subline">原題: ${selectedSection.title}</div>
-            </div>
-            <div class="entry-actions">
-              <button class="action ${isSaved(selectedSection.id) ? "active" : ""}" data-action="save" data-id="${selectedSection.id}">${isSaved(selectedSection.id) ? "保存済み" : "保存"}</button>
-              <button class="action ${isDone(selectedSection.id) ? "active" : ""}" data-action="done" data-id="${selectedSection.id}">${isDone(selectedSection.id) ? "完了済み" : "完了"}</button>
-            </div>
-          </div>
-
-          ${summary ? `<p class="summary">${summary}</p>` : ""}
-
-          ${selectedSection.paragraphs_ja?.slice(1).length ? selectedSection.paragraphs_ja.slice(1).map((text) => `<p class="summary">${text}</p>`).join("") : ""}
-
-          ${bullets.length ? `
-            <ul class="bullets">
-              ${bullets.map((item) => `<li>${item}</li>`).join("")}
-            </ul>
-          ` : ""}
-
-          ${images.length ? `
-            <div class="gallery">
-              ${images.map((src) => `<button class="thumb" data-image="${src}" title="画像を拡大"><img src="${src}" alt="${translated}"></button>`).join("")}
-            </div>
-          ` : ""}
-
-          ${links.length ? `
-            <div class="links">
-              ${links.map((link) => `<a href="${link.url}" target="_blank" rel="noreferrer">${link.label_ja || link.label}</a>`).join("")}
-            </div>
-          ` : ""}
-        </article>
       `;
     }
 
@@ -1654,6 +1645,28 @@
       renderList();
       if (isMobileLayout()) closeSidebar();
       document.getElementById("detail")?.scrollIntoView({ behavior, block: "start" });
+      setTimeout(() => {
+        document.getElementById(id)?.scrollIntoView({ behavior, block: "start" });
+      }, 20);
+    }
+
+    function updateActiveFromViewport() {
+      const entries = visibleSectionIds
+        .map((id) => document.getElementById(id))
+        .filter(Boolean);
+      const current = entries.find((entry) => {
+        const rect = entry.getBoundingClientRect();
+        return rect.top <= 170 && rect.bottom >= 170;
+      });
+      if (!current || current.id === activeSectionId) return;
+      activeSectionId = current.id;
+      setCurrentSection(current.id);
+      renderTopbar(getSectionById(current.id));
+      renderToc();
+      const browserButtons = document.querySelectorAll(".browser-item");
+      browserButtons.forEach((button) => {
+        button.classList.toggle("active", button.dataset.selectSection === current.id);
+      });
     }
 
     function resetTransientFilters() {
@@ -1821,6 +1834,7 @@
     window.addEventListener("resize", () => {
       applySidebarState();
     });
+    document.addEventListener("scroll", updateActiveFromViewport, { passive: true });
   </script>
 </body>
 </html>
