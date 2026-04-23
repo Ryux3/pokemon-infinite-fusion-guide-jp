@@ -399,6 +399,71 @@
       justify-content: flex-end;
     }
 
+    .section-sticky {
+      position: sticky;
+      top: 82px;
+      z-index: 9;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 250, 244, 0.92);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 14px 30px rgba(58, 32, 18, 0.08);
+    }
+
+    .section-sticky-copy {
+      min-width: 0;
+    }
+
+    .section-sticky-copy strong {
+      display: block;
+      font-size: 14px;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+
+    .section-sticky-copy span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    .section-sticky-actions {
+      display: flex;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
+    .fab-stack {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .fab {
+      border: 1px solid rgba(38, 27, 23, 0.12);
+      border-radius: 999px;
+      padding: 12px 14px;
+      background: rgba(255, 249, 242, 0.95);
+      color: var(--ink);
+      box-shadow: 0 16px 30px rgba(58, 32, 18, 0.12);
+      backdrop-filter: blur(14px);
+      font-size: 13px;
+      cursor: pointer;
+    }
+
     .hero {
       display: none;
     }
@@ -983,6 +1048,20 @@
         align-items: flex-start;
       }
 
+      .section-sticky {
+        top: 74px;
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .section-sticky-actions {
+        width: 100%;
+      }
+
+      .section-sticky-actions .icon-action {
+        flex: 1 1 0;
+      }
+
       .topbar-main {
         align-items: flex-start;
       }
@@ -995,10 +1074,6 @@
       .topbar-actions .icon-action {
         flex: 1 1 calc(50% - 4px);
         text-align: center;
-      }
-
-      .detail-nav {
-        flex-direction: column;
       }
 
       .entry-header {
@@ -1062,6 +1137,11 @@
         top: 12px;
         right: 12px;
       }
+
+      .fab-stack {
+        right: 12px;
+        bottom: 12px;
+      }
     }
 
     @media (max-width: 420px) {
@@ -1090,6 +1170,10 @@
 
       .topbar-actions .icon-action {
         flex-basis: 100%;
+      }
+
+      .section-sticky-actions {
+        flex-direction: column;
       }
     }
   </style>
@@ -1175,8 +1259,25 @@
         </div>
       </section>
 
+      <section class="section-sticky">
+        <div class="section-sticky-copy">
+          <strong id="stickySectionTitle">現在の章</strong>
+          <span id="stickySectionMeta">スクロールに合わせて更新されます。</span>
+        </div>
+        <div class="section-sticky-actions">
+          <button type="button" class="icon-action" data-open-browser="true">章一覧</button>
+          <button type="button" class="icon-action" data-resume="true">続きから</button>
+        </div>
+      </section>
+
       <section class="detail-panel" id="detail"></section>
     </main>
+  </div>
+
+  <div class="fab-stack">
+    <button type="button" class="fab" data-open-browser="true">目次</button>
+    <button type="button" class="fab" data-show-saved="true">保存</button>
+    <button type="button" class="fab" id="scrollTopFab">上へ</button>
   </div>
 
   <div class="lightbox" id="lightbox">
@@ -1514,15 +1615,23 @@
     function renderTopbar(section) {
       const title = document.getElementById("activeTitle");
       const meta = document.getElementById("activeMeta");
+      const stickyTitle = document.getElementById("stickySectionTitle");
+      const stickyMeta = document.getElementById("stickySectionMeta");
       if (!section) {
         title.textContent = "章を選択してください";
         meta.textContent = "左メニューから章ジャンプ、検索、フィルタにアクセスできます。";
+        stickyTitle.textContent = "現在の章";
+        stickyMeta.textContent = "スクロールに合わせて更新されます。";
         return;
       }
-      title.textContent = translateTitle(section.title, section.title_ja);
-      meta.textContent = section.chapter
+      const translated = translateTitle(section.title, section.title_ja);
+      const detail = section.chapter
         ? `${translateTitle(section.chapter, section.chapter_ja)} / ${regionLabel(section.region)}`
         : regionLabel(section.region);
+      title.textContent = translated;
+      meta.textContent = detail;
+      stickyTitle.textContent = translated;
+      stickyMeta.textContent = detail;
     }
 
     function renderToc() {
@@ -1695,6 +1804,10 @@
 
     document.getElementById("menuToggle").addEventListener("click", () => {
       toggleSidebar();
+    });
+
+    document.getElementById("scrollTopFab").addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
     });
 
     document.getElementById("appOverlay").addEventListener("click", () => {
