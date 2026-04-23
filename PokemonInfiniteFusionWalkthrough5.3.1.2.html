@@ -1482,8 +1482,24 @@
     }
 
     function displayTitle(title, translatedTitle = "", level = "") {
-      if (isLocationTitle(title, level)) return title;
+      if (isLocationTitle(title, level)) {
+        return translatedTitle && translatedTitle !== title ? `${title} (${translatedTitle})` : title;
+      }
       return translateTitle(title, translatedTitle);
+    }
+
+    const locationNamePairs = [...new Map(
+      sectionList
+        .filter((section) => isLocationTitle(section.title, section.level) && section.title_ja && section.title_ja !== section.title)
+        .map((section) => [section.title, [section.title, section.title_ja]])
+    ).values()].sort((a, b) => b[1].length - a[1].length);
+
+    function normalizeBodyText(text = "") {
+      let result = text;
+      for (const [english, japanese] of locationNamePairs) {
+        result = result.split(japanese).join(`${english} (${japanese})`);
+      }
+      return result;
     }
 
     function regionLabel(raw) {
@@ -1679,7 +1695,7 @@
 
       list.innerHTML = filtered.map((section) => {
         const translated = displayTitle(section.title, section.title_ja, section.level);
-        const summary = section.paragraphs_ja?.[0] || section.paragraphs?.[0] || "";
+        const summary = normalizeBodyText(section.paragraphs_ja?.[0] || section.paragraphs?.[0] || "");
         const chapterLabel = section.chapter ? displayTitle(section.chapter, section.chapter_ja, "h2") : null;
         const active = section.id === selectedSection.id ? "active" : "";
         const saved = isSaved(section.id) ? "保存済み" : "";
@@ -1707,8 +1723,9 @@
         <div class="detail-list">
           ${filtered.map((section) => {
             const translated = displayTitle(section.title, section.title_ja, section.level);
-            const summary = section.paragraphs_ja?.[0] || section.paragraphs?.[0] || "";
-            const bullets = section.bullets_ja?.length ? section.bullets_ja : section.bullets || [];
+            const summary = normalizeBodyText(section.paragraphs_ja?.[0] || section.paragraphs?.[0] || "");
+            const paragraphs = (section.paragraphs_ja?.length ? section.paragraphs_ja : section.paragraphs || []).map((text) => normalizeBodyText(text));
+            const bullets = (section.bullets_ja?.length ? section.bullets_ja : section.bullets || []).map((text) => normalizeBodyText(text));
             const images = section.images || [];
             const links = section.links || [];
             const chapterLabel = section.chapter ? displayTitle(section.chapter, section.chapter_ja, "h2") : null;
@@ -1732,7 +1749,7 @@
                 </div>
 
                 ${summary ? `<p class="summary">${summary}</p>` : ""}
-                ${section.paragraphs_ja?.slice(1).length ? section.paragraphs_ja.slice(1).map((text) => `<p class="summary">${text}</p>`).join("") : ""}
+                ${paragraphs.slice(1).length ? paragraphs.slice(1).map((text) => `<p class="summary">${text}</p>`).join("") : ""}
 
                 ${bullets.length ? `
                   <ul class="bullets">
@@ -1748,7 +1765,7 @@
 
                 ${links.length ? `
                   <div class="links">
-                    ${links.map((link) => `<a href="${link.url}" target="_blank" rel="noreferrer">${link.label_ja || link.label}</a>`).join("")}
+                    ${links.map((link) => `<a href="${link.url}" target="_blank" rel="noreferrer">${normalizeBodyText(link.label_ja || link.label)}</a>`).join("")}
                   </div>
                 ` : ""}
               </article>
